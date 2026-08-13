@@ -164,7 +164,7 @@ function App() {
             </div>
           </div>
           <div className="mt-10 border-t-2 border-black/10 pt-6 text-center text-xs text-black/40">
-            &copy; {new Date().getFullYear()} CivicRes. Built for Nigerian cities.
+            &copy; {new Date().getFullYear()} CivicRes. See Something, Say Something.
           </div>
         </div>
       </footer>
