@@ -137,7 +137,7 @@ function App() {
             <div>
               <p className="text-sm font-bold text-black">CivRes</p>
               <p className="mt-2 text-sm leading-relaxed text-black/55">
-                A simple tool for Nigerians to report civic issues — bad roads, broken lights, flooding, and more — directly to the authorities.
+                A simple tool for Nigerians to report civic issues, including bad roads, broken lights, flooding, and more, directly to the authorities.
               </p>
             </div>
             <div>
@@ -149,7 +149,7 @@ function App() {
                   </Link>
                 </li>
                 <li>
-                  <span className="text-black/30">Anonymous & secure</span>
+                  <span className="text-black/30">Anonymous &amp; secure</span>
                 </li>
                 <li>
                   <span className="text-black/30">Real-time tracking</span>
