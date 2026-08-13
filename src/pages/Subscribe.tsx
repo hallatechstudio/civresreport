@@ -10,7 +10,7 @@ function Subscribe() {
     if (!email) return;
     setSubmitted(true);
   }
-
+// update
   return (
     <div className="mx-auto max-w-xl px-6 py-20 text-center">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-black/50">Stay informed</p>
