@@ -70,9 +70,6 @@ function Home({ categories, howItWorks }: HomeProps) {
               onClick={() => pickCategory(id)}
               className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-black bg-white p-5 text-center transition-colors active:bg-black/[0.04] hover:bg-black/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-black sm:gap-4 sm:p-8"
             >
-              <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-black text-white sm:hidden">
-                <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
-              </div>
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-black bg-black/90 text-white sm:h-14 sm:w-14">
                 <Icon className="h-5 w-5 sm:h-6 sm:w-6 stroke-white" strokeWidth={1.5} />
               </div>

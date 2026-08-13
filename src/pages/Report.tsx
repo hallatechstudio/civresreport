@@ -132,7 +132,7 @@ function Report({ categories }: ReportProps) {
 
   const severityStyle: Record<string, string> = {
     Low: "border-black bg-black text-white",
-    Medium: "border-black bg-white text-black",
+    Medium: "border-black bg-black text-white",
     Urgent: "border-black bg-black text-white",
   };
 

@@ -113,7 +113,7 @@ function App() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black">
               <Megaphone className="h-4.5 w-4.5 text-white" strokeWidth={2.2} />
             </div>
-            <p className="text-lg font-bold tracking-tight text-black">CivRes</p>
+            <p className="text-lg font-bold tracking-tight text-black">CivicRes</p>
           </Link>
           <div className="hidden items-center gap-2 rounded-full border-2 border-black/10 bg-white px-3.5 py-1.5 text-xs font-semibold text-black/60 sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-black" />
@@ -135,7 +135,7 @@ function App() {
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <p className="text-sm font-bold text-black">CivRes</p>
+              <p className="text-sm font-bold text-black">CivicRes</p>
               <p className="mt-2 text-sm leading-relaxed text-black/55">
                 A simple tool for Nigerians to report civic issues, including bad roads, broken lights, flooding, and more, directly to the authorities.
               </p>
@@ -164,7 +164,7 @@ function App() {
             </div>
           </div>
           <div className="mt-10 border-t-2 border-black/10 pt-6 text-center text-xs text-black/40">
-            &copy; {new Date().getFullYear()} CivRes. Built for Nigerian cities.
+            &copy; {new Date().getFullYear()} CivicRes. Built for Nigerian cities.
           </div>
         </div>
       </footer>
