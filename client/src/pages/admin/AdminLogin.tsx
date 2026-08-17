@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone } from "lucide-react";
+import { apiUrl } from "../../utils/api";
 
 function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ function AdminLogin() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(apiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Search, CheckCircle2, Clock, Send } from "lucide-react";
+import { apiUrl } from "../utils/api";
 
 type ReportStatus = {
   id: string;
@@ -43,7 +44,7 @@ function TrackLookup({ onFound }: { onFound: (report: ReportStatus) => void }) {
     if (!trimmed) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/reports/track/${trimmed}`);
+      const res = await fetch(apiUrl(`/api/reports/track/${trimmed}`));
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Report not found");
@@ -202,7 +203,7 @@ function Track() {
     if (trackingId) {
       setError("");
       setReport(null);
-      fetch(`/api/reports/track/${trackingId}`)
+      fetch(apiUrl(`/api/reports/track/${trackingId}`))
         .then((res) => {
           if (!res.ok) {
             return res.json().then((data) => Promise.reject(data.error || "Not found"));

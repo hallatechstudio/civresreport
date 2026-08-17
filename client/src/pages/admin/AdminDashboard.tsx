@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiUrl } from "../../utils/api";
 
 type Report = {
   id: string;
@@ -183,7 +184,7 @@ function AdminDashboard() {
   async function assignAuthorities(reportId: string) {
     const ids = selectedAuthorities[reportId] || [];
     setAssignStatuses((prev) => ({ ...prev, [reportId]: "pending" }));
-    await fetch(`/api/reports/${reportId}/assign`, {
+      await fetch(apiUrl(`/api/reports/${reportId}/assign`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ authorityIds: ids }),
@@ -197,7 +198,7 @@ function AdminDashboard() {
 
   async function sendMessage(reportId: string, message: string) {
     setMessageStatuses((prev) => ({ ...prev, [reportId]: "pending" }));
-    await fetch(`/api/reports/${reportId}/message`, {
+      await fetch(apiUrl(`/api/reports/${reportId}/message`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
@@ -212,8 +213,8 @@ function AdminDashboard() {
   async function loadData() {
     try {
       const [reportsRes, authRes] = await Promise.all([
-        fetch("/api/reports"),
-        fetch("/api/authorities"),
+        fetch(apiUrl("/api/reports")),
+        fetch(apiUrl("/api/authorities")),
       ]);
       const reportsData = await reportsRes.json();
       const authData = await authRes.json();
@@ -227,7 +228,7 @@ function AdminDashboard() {
   }
 
   async function updateStatus(reportId: string, status: string) {
-    await fetch(`/api/reports/${reportId}/status`, {
+      await fetch(apiUrl(`/api/reports/${reportId}/status`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),

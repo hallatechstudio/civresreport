@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
+import { apiUrl } from "../../utils/api";
 
 type Authority = {
   id: string;
@@ -20,7 +21,7 @@ function AdminAuthorities() {
 
   async function loadAuthorities() {
     try {
-      const res = await fetch("/api/authorities");
+      const res = await fetch(apiUrl("/api/authorities"));
       const data = await res.json();
       setItems(data.authorities || []);
     } catch (err) {
@@ -32,7 +33,7 @@ function AdminAuthorities() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    await fetch("/api/authorities", {
+      await fetch(apiUrl("/api/authorities"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, type, contact }),

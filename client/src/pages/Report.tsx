@@ -13,6 +13,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import type { Category } from "../App";
+import { apiUrl } from "../utils/api";
 
 const STATES = [
   "Lagos",
@@ -140,7 +141,7 @@ function Report({ categories }: ReportProps) {
       video: videoUrl,
     };
 
-    fetch("/api/reports", {
+    fetch(apiUrl("/api/reports"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -180,7 +181,7 @@ function Report({ categories }: ReportProps) {
       try {
         const form = new FormData();
         form.append("file", file);
-        const res = await fetch("/api/upload", { method: "POST", body: form });
+        const res = await fetch(apiUrl("/api/upload"), { method: "POST", body: form });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Upload failed");
         newUrls.push(data.url);
@@ -214,7 +215,7 @@ function Report({ categories }: ReportProps) {
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: form });
+        const res = await fetch(apiUrl("/api/upload"), { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
       setAudioUrl(data.url);
@@ -241,7 +242,7 @@ function Report({ categories }: ReportProps) {
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: form });
+        const res = await fetch(apiUrl("/api/upload"), { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
       setVideoUrl(data.url);
