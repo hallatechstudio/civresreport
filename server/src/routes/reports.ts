@@ -23,7 +23,7 @@ router.get("/", async (_req: Request, res: Response) => {
 
 router.get("/track/:trackingId", async (req: Request, res: Response) => {
   const report = await prisma.report.findUnique({
-    where: { trackingId: req.params.trackingId },
+    where: { trackingId: req.params.trackingId as string },
   });
   if (!report) {
     return res.status(404).json({ error: "Report not found" });
@@ -75,7 +75,7 @@ router.post("/:id/assign", async (req: Request, res: Response) => {
   const { authorityIds } = req.body;
   const ids = Array.isArray(authorityIds) ? authorityIds : authorityIds ? [authorityIds] : [];
   const report = await prisma.report.update({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     data: { assignedTo: JSON.stringify(ids), status: "assigned" },
   });
   res.json(report);
@@ -88,7 +88,7 @@ router.patch("/:id/status", async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Invalid status" });
   }
   const report = await prisma.report.update({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     data: { status },
   });
   res.json(report);
@@ -97,7 +97,7 @@ router.patch("/:id/status", async (req: Request, res: Response) => {
 router.post("/:id/message", async (req: Request, res: Response) => {
   const { message } = req.body;
   const report = await prisma.report.update({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     data: { notes: message, messageStatus: "sent" },
   });
   res.json(report);
