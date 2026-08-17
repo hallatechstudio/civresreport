@@ -6,8 +6,11 @@ import {
   Check,
   ChevronRight,
   Mic,
+  Video,
   X,
   MapPin,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 import type { Category } from "../App";
 
@@ -43,12 +46,20 @@ function Report({ categories }: ReportProps) {
   const [area, setArea] = useState("");
   const [state, setState] = useState<string>(STATES[0]!);
   const [severity, setSeverity] = useState<string>("Medium");
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoName, setPhotoName] = useState<string | null>(null);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [audioPreview, setAudioPreview] = useState<string | null>(null);
   const [audioName, setAudioName] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoName, setVideoName] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [contactMethod, setContactMethod] = useState<string>("anonymous");
+  const [contactValue, setContactValue] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const category = categories.find((c) => c.id === categoryId);
 
@@ -63,10 +74,17 @@ function Report({ categories }: ReportProps) {
     );
   }
 
+  const allPhotosUploaded = photoFiles.length === 0 || photoUrls.length === photoFiles.length;
+  const audioUploaded = !audioName || !!audioUrl;
+  const videoUploaded = !videoName || !!videoUrl;
+
   const canSubmit =
     subcategories.length > 0 &&
     description.trim().split(/\s+/).filter(Boolean).length >= 4 &&
-    area.trim().length > 1;
+    area.trim().length > 1 &&
+    allPhotosUploaded &&
+    audioUploaded &&
+    videoUploaded;
 
   function reset() {
     setSubcategories([]);
@@ -75,10 +93,17 @@ function Report({ categories }: ReportProps) {
     setDescription("");
     setArea("");
     setSeverity("Medium");
-    setPhotoPreview(null);
-    setPhotoName(null);
+    setPhotoPreviews([]);
+    setPhotoFiles([]);
+    setPhotoUrls([]);
+    setAudioPreview(null);
     setAudioName(null);
     setAudioUrl(null);
+    setVideoPreview(null);
+    setVideoName(null);
+    setVideoUrl(null);
+    setContactMethod("anonymous");
+    setContactValue("");
     navigate("/");
   }
 
@@ -98,36 +123,141 @@ function Report({ categories }: ReportProps) {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (!canSubmit) return;
-    setStep("done");
+    if (!canSubmit || !categoryId) return;
+
+    const payload = {
+      categoryId,
+      categoryName: category!.name,
+      subcategories,
+      description,
+      area,
+      state,
+      severity,
+      contactMethod,
+      contactValue: contactMethod === "anonymous" ? null : contactValue,
+      photos: photoUrls,
+      audio: audioUrl,
+      video: videoUrl,
+    };
+
+    fetch("/api/reports", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setStep("done");
+        setTimeout(() => {
+          navigate(`/success?trackingId=${data.trackingId}`);
+        }, 0);
+      })
+      .catch(() => setStep("done"));
   }
 
-  function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => setPhotoPreview(reader.result as string);
-    reader.readAsDataURL(file);
+  async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const newPreviews: string[] = [];
+    const newFiles: File[] = [];
+    const newUrls: string[] = [];
+
+    for (const file of files) {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      newPreviews.push(dataUrl);
+      newFiles.push(file);
+    }
+
+    setPhotoPreviews((prev) => [...prev, ...newPreviews]);
+    setPhotoFiles((prev) => [...prev, ...newFiles]);
+
+    for (const file of newFiles) {
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload failed");
+        newUrls.push(data.url);
+      } catch (err) {
+        console.error("Photo upload failed:", err);
+      }
+    }
+
+    setPhotoUrls((prev) => [...prev, ...newUrls]);
+
+    if (newUrls.length !== newFiles.length) {
+      const failedCount = newFiles.length - newUrls.length;
+      const uploadedCount = newPreviews.length - failedCount;
+      setPhotoPreviews((prev) => prev.slice(0, uploadedCount));
+      setPhotoFiles((prev) => prev.slice(0, uploadedCount));
+    }
   }
 
-  function removePhoto() {
-    setPhotoPreview(null);
-    setPhotoName(null);
+  function removePhoto(index: number) {
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotoUrls((prev) => prev.filter((_, i) => i !== index));
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleAudioChange(e: ChangeEvent<HTMLInputElement>) {
+  async function handleAudioChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setAudioName(file.name);
-    setAudioUrl(URL.createObjectURL(file));
+    setAudioPreview(URL.createObjectURL(file));
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setAudioUrl(data.url);
+    } catch (err) {
+      console.error("Audio upload failed:", err);
+      setAudioName(null);
+      setAudioPreview(null);
+      if (audioInputRef.current) audioInputRef.current.value = "";
+    }
   }
 
   function removeAudio() {
     setAudioName(null);
+    setAudioPreview(null);
     setAudioUrl(null);
     if (audioInputRef.current) audioInputRef.current.value = "";
+  }
+
+  async function handleVideoChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVideoName(file.name);
+    setVideoPreview(URL.createObjectURL(file));
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setVideoUrl(data.url);
+    } catch (err) {
+      console.error("Video upload failed:", err);
+      setVideoName(null);
+      setVideoPreview(null);
+      if (videoInputRef.current) videoInputRef.current.value = "";
+    }
+  }
+
+  function removeVideo() {
+    setVideoName(null);
+    setVideoPreview(null);
+    setVideoUrl(null);
+    if (videoInputRef.current) videoInputRef.current.value = "";
   }
 
   const severityStyle: Record<string, string> = {
@@ -343,39 +473,36 @@ function Report({ categories }: ReportProps) {
             id="photo-upload"
             type="file"
             accept="image/*"
+            multiple
             onChange={handlePhotoChange}
             className="hidden"
           />
-          {photoPreview ? (
-            <div className="flex items-center gap-4 rounded-xl border-2 border-black bg-white p-3">
-              <img
-                src={photoPreview}
-                alt="Attached preview"
-                className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 text-sm font-bold text-black">
-                  <Check className="h-4 w-4 flex-shrink-0" />
-                  Photo attached
-                </p>
-                <p className="truncate text-xs text-black/45">{photoName}</p>
-              </div>
-              <div className="flex flex-shrink-0 items-center gap-2">
-                <label
-                  htmlFor="photo-upload"
-                  className="cursor-pointer rounded-full border-2 border-black px-3 py-1.5 text-xs font-bold text-black transition-colors hover:bg-black hover:text-white"
-                >
-                  Change
-                </label>
-                <button
-                  type="button"
-                  onClick={removePhoto}
-                  aria-label="Remove photo"
-                  className="rounded-full p-1.5 text-black/40 transition-colors hover:bg-black/5 hover:text-black"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+          {photoPreviews.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {photoPreviews.map((src, idx) => (
+                <div key={idx} className="relative rounded-xl border-2 border-black bg-white p-2">
+                  <img
+                    src={src}
+                    alt={`Attached ${idx + 1}`}
+                    className="h-32 w-full rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(idx)}
+                    aria-label={`Remove photo ${idx + 1}`}
+                    className="absolute right-3 top-3 rounded-full bg-black/80 p-1 text-white transition-colors hover:bg-black"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              <label
+                htmlFor="photo-upload"
+                className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-black/25 bg-white p-4 text-sm font-medium text-black/55 transition-colors hover:border-black hover:text-black"
+              >
+                <Camera className="h-5 w-5" />
+                Add more
+              </label>
             </div>
           ) : (
             <label
@@ -383,7 +510,7 @@ function Report({ categories }: ReportProps) {
               className="flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-black/25 bg-white p-4 text-sm font-medium text-black/55 transition-colors hover:border-black hover:text-black"
             >
               <Camera className="h-5 w-5" />
-              Attach a photo (optional)
+              Attach photos (optional)
             </label>
           )}
         </div>
@@ -397,7 +524,7 @@ function Report({ categories }: ReportProps) {
             onChange={handleAudioChange}
             className="hidden"
           />
-          {audioUrl ? (
+          {audioPreview ? (
             <div className="flex items-center gap-4 rounded-xl border-2 border-black bg-white p-3">
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-black text-white">
                 <Mic className="h-5 w-5" />
@@ -437,6 +564,114 @@ function Report({ categories }: ReportProps) {
           )}
         </div>
 
+        <div>
+          <input
+            ref={videoInputRef}
+            id="video-upload"
+            type="file"
+            accept="video/*"
+            onChange={handleVideoChange}
+            className="hidden"
+          />
+          {videoPreview ? (
+            <div className="flex items-center gap-4 rounded-xl border-2 border-black bg-white p-3">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-black text-white">
+                <Video className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-1.5 text-sm font-bold text-black">
+                  <Check className="h-4 w-4 flex-shrink-0" />
+                  Video attached
+                </p>
+                <p className="truncate text-xs text-black/45">{videoName}</p>
+              </div>
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <label
+                  htmlFor="video-upload"
+                  className="cursor-pointer rounded-full border-2 border-black px-3 py-1.5 text-xs font-bold text-black transition-colors hover:bg-black hover:text-white"
+                >
+                  Change
+                </label>
+                <button
+                  type="button"
+                  onClick={removeVideo}
+                  aria-label="Remove video"
+                  className="rounded-full p-1.5 text-black/40 transition-colors hover:bg-black/5 hover:text-black"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label
+              htmlFor="video-upload"
+              className="flex w-full cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-black/25 bg-white p-4 text-sm font-medium text-black/55 transition-colors hover:border-black hover:text-black"
+            >
+              <Video className="h-5 w-5" />
+              Attach a video clip (optional)
+            </label>
+          )}
+        </div>
+
+        <div>
+          <p className="text-sm font-bold text-black">Contact preference</p>
+          <p className="mt-1 text-xs text-black/40">Choose how you want to receive updates. Anonymous by default.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              { id: "anonymous", label: "Anonymous", Icon: X },
+              { id: "email", label: "Email", Icon: Mail },
+              { id: "whatsapp", label: "WhatsApp", Icon: MessageCircle },
+            ].map(({ id, label, Icon }) => {
+              const selected = contactMethod === id;
+              return (
+                <button
+                  type="button"
+                  key={id}
+                  onClick={() => setContactMethod(id)}
+                  aria-pressed={selected}
+                  className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-2 text-sm font-semibold transition-all ${
+                    selected
+                      ? "border-black bg-black text-white"
+                      : "border-black/15 bg-white text-black hover:border-black/40"
+                  }`}
+                >
+                  {selected && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {contactMethod === "email" && (
+            <div className="mt-3">
+              <label htmlFor="contact-email" className="text-sm font-bold text-black">Email</label>
+              <input
+                id="contact-email"
+                type="email"
+                value={contactValue}
+                onChange={(e) => setContactValue(e.target.value)}
+                placeholder="your@email.com"
+                className="mt-2 w-full rounded-xl border-2 border-black/15 bg-white px-3 py-3 text-sm outline-none transition-colors focus:border-black focus:ring-2 focus:ring-black/20"
+              />
+            </div>
+          )}
+
+          {contactMethod === "whatsapp" && (
+            <div className="mt-3">
+              <label htmlFor="contact-whatsapp" className="text-sm font-bold text-black">WhatsApp number</label>
+              <input
+                id="contact-whatsapp"
+                type="tel"
+                value={contactValue}
+                onChange={(e) => setContactValue(e.target.value)}
+                placeholder="+234 800 000 0000"
+                className="mt-2 w-full rounded-xl border-2 border-black/15 bg-white px-3 py-3 text-sm outline-none transition-colors focus:border-black focus:ring-2 focus:ring-black/20"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:items-center">
           <button
             type="submit"
@@ -446,7 +681,7 @@ function Report({ categories }: ReportProps) {
             Submit report
           </button>
           <p className="text-xs text-black/40">
-            Reports are anonymous. No personal data required.
+            You can submit anonymously or provide an email/WhatsApp for updates.
           </p>
         </div>
       </form>

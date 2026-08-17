@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { ChevronRight, MessageCircle, Search } from "lucide-react";
 import type { Category } from "../App";
 
 type Step = "pick" | "form" | "done";
@@ -79,6 +79,21 @@ function Home({ categories, howItWorks }: HomeProps) {
         </div>
       </div>
 
+      <div className="mx-auto mt-6 max-w-2xl">
+        <Link
+          to="/track"
+          className="flex items-center justify-between gap-3 rounded-2xl border-2 border-black bg-white p-5 text-left transition-colors hover:bg-black/[0.02] sm:p-6"
+        >
+          <div>
+            <p className="text-sm font-bold text-black sm:text-base">Track your report</p>
+            <p className="text-xs text-black/55 sm:text-sm">Track your report to see its status. Your issues are documented and followed up until they are resolved.</p>
+          </div>
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
+            <Search className="h-5 w-5 text-black" />
+          </div>
+        </Link>
+      </div>
+
       <div className="mx-auto max-w-2xl mt-12 rounded-3xl border-2 border-black bg-black p-8 text-center sm:p-10">
         <p className="text-sm font-bold uppercase tracking-[0.14em] text-white/70">Stay informed</p>
         <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">Subscribe to get intelligent reports</h2>
@@ -93,7 +108,7 @@ function Home({ categories, howItWorks }: HomeProps) {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Enter your email"
-              className="w-full rounded-full border-2 border-white/20 bg-white px-5 py-2.5 text-sm text-black outline-none placeholder:text-black/40 focus:border-white"
+              className="w-full rounded-full border-2 border-white/20 bg-white px-5 py-2.5 text-sm text-black outline-none placeholder:text-black/40 focus:border-white sm:w-72"
             />
             <button
               type="submit"
@@ -102,8 +117,22 @@ function Home({ categories, howItWorks }: HomeProps) {
               Subscribe
             </button>
           </form>
-        )}
-      </div>
+          )}
+          
+          <p className="mt-4 text-xs text-white/60">
+            You can join our WhatsApp community for updates.
+            <br />
+            <a
+              href="https://chat.whatsapp.com/example"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-semibold text-white underline underline-offset-4 transition-colors hover:text-white/80"
+            >
+              <img src="/whatsapp.webp" alt="WhatsApp" className="h-3.5 w-3.5" />
+              Join group
+            </a>
+          </p>
+        </div>
     </section>
   );
 }
